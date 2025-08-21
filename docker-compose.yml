@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  web:
+    build: .
+    container_name: naukri-campus-clash-web
+    working_dir: /webapps
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/webapps
+    environment:
+      DJANGO_SETTINGS_MODULE: campus_clash.settings
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             gunicorn campus_clash.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    restart: unless-stopped

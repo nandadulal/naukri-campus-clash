@@ -707,8 +707,16 @@ class EvaluateTranscriptView(APIView):
 
 
 
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from faker import Faker
+
+fake = Faker()
+
 @api_view(["GET"])
 def get_user(request):
-    # Hackathon demo: always return the same realistic username
-    return Response({"user_name": "Aarav Mehta"})
+    # Generate a realistic unique name every time
+    name = fake.name()
+    return Response({"user_name": name})
+
 

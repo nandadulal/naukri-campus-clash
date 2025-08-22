@@ -105,7 +105,7 @@ def update_user_profile(request):
 
     # Add score based on the game type
     if game_name.lower() == "vibe":
-        score_obj.score += 100  # Add 100 XP for "Vibe Check"
+        score_obj.score += 50  # Add 100 XP for "Vibe Check"
     elif game_name.lower() == "conversify":
         score_obj.score += 50  # Add 50 XP for "Conversify"
     else:

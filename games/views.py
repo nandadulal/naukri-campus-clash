@@ -199,7 +199,7 @@ def leaderboard(request):
     """
 
     real_data = (
-        DailyGameScore.objects.values("user_name")
+        DailyGameScore.objects.values("user_name", "campus_name")
         .annotate(total_xp=Sum("score"), game_count=Sum("game_count"))
     )
 
@@ -212,6 +212,7 @@ def leaderboard(request):
 
         leaderboard.append({
             "user_name": user["user_name"],
+            "campus_name": user["campus_name"],   # ✅ added campus_name
             "total_xp": total_xp,
             "game_count": game_count,
             "efficiency": round(efficiency, 2),

@@ -520,16 +520,37 @@ def get_scenario_prompt():
         return None
 
 
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Transcript
+from .serializers import TranscriptSerializer
 
+@api_view(["POST"])
+def save_transcript(request):
+    """
+    Capture transcript messages per username.
+    - First POST: creates transcript
+    - Subsequent POSTs: append messages
+    """
+    username = request.data.get("username")
+    message = request.data.get("message")
 
+    if not username or not message:
+        return Response({"error": "username and message are required"},
+                        status=status.HTTP_400_BAD_REQUEST)
 
+    # Check if transcript exists
+    transcript, created = Transcript.objects.get_or_create(user_name=username)
 
+    # Append or create
+    transcript.add_message(message)
 
-
-
-
-
-
+    serializer = TranscriptSerializer(transcript)
+    return Response({
+        "created": created,
+        "transcript": serializer.data
+    }, status=status.HTTP_200_OK)
 
 
 

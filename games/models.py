@@ -41,3 +41,20 @@ class Transcript(models.Model):
     def add_message(self, message):
         self.messages.append(message)
         self.save()
+
+    def get_messages_string(self) -> str:
+        """
+        Return all messages joined into a single string.
+        """
+        return "\n".join(self.messages)
+
+
+class Evaluation(models.Model):
+    user_name = models.CharField(max_length=100)
+    evaluation = models.JSONField()  # stores full JSON response (strengths, improvements, xp, etc.)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Evaluation for {self.username}"
+
+

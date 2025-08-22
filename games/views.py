@@ -1,4 +1,5 @@
 import os
+import re
 import random
 import requests
 import logging
@@ -551,6 +552,156 @@ def save_transcript(request):
         "created": created,
         "transcript": serializer.data
     }, status=status.HTTP_200_OK)
+
+
+
+
+
+evaluation_prompt = """
+You are an AI Evaluator for "Naukri Campus Conversify." Your primary function is to critically assess a student's performance in a given role-play scenario and provide structured feedback.
+
+Here are the inputs for your evaluation:
+
+
+Full Role-play Transcript (AI vs. Student):
+
+{transcript}
+
+
+Based on these inputs, perform the following evaluation:
+
+Analyze the student's performance specifically against the context of the transcript.
+
+Strengths (JSON strengths array): Identify concrete strengths demonstrated by the student. Provide specific examples or refer to moments in the transcript where possible.
+
+Areas of Improvement (JSON areas_of_improvement array): Pinpoint specific areas where the student could improve. Offer clear, constructive, and actionable suggestions.
+
+XP Score (JSON xp field): Provide a numerical score out of 100. This score should be a highly critical judgment, as if you are evaluating a real-world investment with significant funds at stake.
+
+High Score (80-100): Student demonstrated exceptional readiness, strong competence, effectively mitigated risks, presented a robust and reliable case, and inspired high confidence.
+
+Medium Score (50-79): Student showed foundational understanding and some competence but had noticeable gaps in critical areas, missed opportunities to excel, or presented a less than fully convincing case.
+
+Low Score (0-49): Student exhibited significant gaps, poor judgment, inability to address the core mission effectively, failed to inspire confidence, or potentially increased perceived risk.
+
+Justify this score implicitly through the specific strengths and areas for improvement you identify.
+
+Your output must be in the following JSON format ONLY:
+
+
+
+    {{
+  "strengths": [
+    "Specific strength identified based on transcript.",
+    "Another specific strength with examples if applicable."
+  ],
+  "areas_of_improvement": [
+    "Specific area for improvement with actionable advice.",
+    "Another area for improvement, linking to skill gaps or missed opportunities."
+  ],
+  "xp": [Score out of 100]
+    }}
+"""
+
+def evaluate_transcript(user_name: str):
+    """
+    Call Gemini (or whichever LLM SDK is configured) to evaluate a transcript
+    for Naukri Campus Conversify.
+    Retrieves transcript from DB using get_messages_string(user_name),
+    injects it into evaluation_prompt, and returns the evaluation response.
+    """
+
+    api_key = os.getenv("GEMINI_API_KEY", "")
+    if not api_key or genai is None:
+        logger.error("Gemini API not configured or SDK missing.")
+        return None
+
+    try:
+        transcript_obj = Transcript.objects.get(user_name=user_name)
+        logger.info(f"Fetching transcript for user: {user_name}...")
+        transcript = transcript_obj.get_messages_string()
+        if not transcript:
+            logger.error(f"No transcript found for user: {user_name}")
+            return None
+
+        # Prepare evaluation prompt
+        final_prompt = evaluation_prompt.format(transcript=transcript)
+
+        logger.info("Requesting evaluation from Gemini API...")
+        genai.configure(api_key=api_key)
+
+        model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+        model = genai.GenerativeModel(model_name)
+
+        # Pass evaluation prompt instead of scenario_creator_prompt
+        response = model.generate_content(final_prompt)
+        text = (response.text or "").strip()
+
+        logger.debug(f"Gemini evaluation raw response: {text[:300]}...")
+
+        return text  # returning the raw evaluation JSON
+
+    except Exception as e:
+        logger.exception(f"Gemini evaluation call failed for {user_name}: {e}")
+        return None
+
+
+
+import json
+import re
+import logging
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Evaluation
+
+logger = logging.getLogger(__name__)
+
+class EvaluateTranscriptView(APIView):
+    """
+    API endpoint to evaluate a user's transcript and store results in DB.
+    """
+
+    def post(self, request, *args, **kwargs):
+        username = request.data.get("username")
+        if not username:
+            return Response({"error": "username is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Step 1: Evaluate transcript
+            evaluation_text = evaluate_transcript(username)
+            if not evaluation_text:
+                return Response(
+                    {"error": "Evaluation failed or transcript missing"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            # Step 2: Try to clean and parse JSON
+            result = None
+            try:
+                # remove markdown json fences like ```json ... ```
+                cleaned = re.sub(r"^```json\s*|\s*```$", "", evaluation_text.strip(), flags=re.MULTILINE | re.DOTALL)
+                result = json.loads(cleaned)
+            except Exception as e:
+                logger.warning(f"Failed to parse evaluation JSON, storing raw. Error: {e}")
+                result = {"raw": evaluation_text}
+
+            # Step 3: Save entire evaluation JSON
+            evaluation = Evaluation.objects.create(
+                user_name=username,
+                evaluation=result
+            )
+
+            return Response({
+                "message": "Evaluation saved successfully",
+                "evaluation_id": evaluation.id,
+                "evaluation": result
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            logger.exception(f"Error evaluating transcript for {username}: {e}")
+            return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 

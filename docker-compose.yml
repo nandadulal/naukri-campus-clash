@@ -13,7 +13,49 @@ services:
       DJANGO_SETTINGS_MODULE: campus_clash.settings
       PYTHONUNBUFFERED: "1"
       PYTHONDONTWRITEBYTECODE: "1"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      GOOELE_KEY: ""
     command: >
       sh -c "python manage.py migrate --noinput &&
              gunicorn campus_clash.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.2
+    container_name: redis
+    restart: unless-stopped
+
+  celery:
+    build: .
+    container_name: celery-worker
+    working_dir: /webapps
+    command: celery -A campus_clash worker -l info
+    volumes:
+      - ./:/webapps
+    environment:
+      DJANGO_SETTINGS_MODULE: campus_clash.settings
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    depends_on:
+      - redis
+      - web
+    restart: unless-stopped
+
+  celery-beat:
+    build: .
+    container_name: celery-beat
+    working_dir: /webapps
+    command: celery -A campus_clash beat -l info
+    volumes:
+      - ./:/webapps
+    environment:
+      DJANGO_SETTINGS_MODULE: campus_clash.settings
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    depends_on:
+      - redis
+      - web
     restart: unless-stopped

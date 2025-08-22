@@ -29,6 +29,7 @@ INSTALLED_APPS = [
 
     # Third-party apps
     "rest_framework",
+    "corsheaders",
 
     # Local apps
     "games",
@@ -36,6 +37,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -112,3 +114,59 @@ REST_FRAMEWORK = {
         "rest_framework.parsers.JSONParser",
     ],
 }
+
+CELERY_BROKER_URL = "redis://redis:6379/0"
+CELERY_RESULT_BACKEND = "redis://redis:6379/0"
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+
+# Logging Configuration
+# https://docs.djangoproject.com/en/5.2/topics/logging/
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[{asctime}] {levelname} {name} ({module}:{lineno}) - {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname}: {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "celery": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        # Your project logger (adjust module name if needed)
+        "games": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+}
+
+GEMINI_API_KEY = os.environ.get('GOOGLE_KEY')
+

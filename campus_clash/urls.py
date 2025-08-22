@@ -14,9 +14,27 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+# from django.contrib import admin
+# from django.urls import path
+
+# urlpatterns = [
+#     path('admin/', admin.site.urls),
+# ]
+
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.http import JsonResponse
+from games.views import get_user
+
+# simple health endpoint (optional)
+def health(_request):
+    return JsonResponse({"status": "ok"})
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),
+    path("health/", health),                 # GET /health → {"status":"ok"}
+    path("api/games/", include("games.urls")),
+    path("api/user/", get_user, name="user"),
+    # path("api/feed/", include("feed.urls")), # keep if you have the feed app
 ]
+

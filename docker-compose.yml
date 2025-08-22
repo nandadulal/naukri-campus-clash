@@ -6,7 +6,7 @@ services:
     container_name: naukri-campus-clash-web
     working_dir: /webapps
     ports:
-      - "8000:8000"
+      - "8100:8000"
     volumes:
       - ./:/webapps
     environment:

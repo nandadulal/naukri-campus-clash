@@ -19,6 +19,8 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.renderers import JSONRenderer
+from rest_framework.decorators import api_view, renderer_classes
 
 # ===== Project Imports =====
 from .models import VibeSession, DailyGameScore, Transcript, Evaluation
@@ -60,6 +62,7 @@ def _fallback_sets(topic: str, count: int = 10):
     }
 
 @api_view(["GET"])
+@renderer_classes([JSONRenderer])
 def vibe_sets(request):
     """
     - Return the latest session from DB if it exists and is valid.
@@ -82,6 +85,7 @@ def vibe_sets(request):
 
 
 @api_view(["POST"])
+@renderer_classes([JSONRenderer])
 def update_user_profile(request):
     """
     Request payload:
@@ -135,6 +139,7 @@ def update_user_profile(request):
 
 
 @api_view(["GET"])
+@renderer_classes([JSONRenderer])
 def get_user_profile(request):
     """
     Request:
@@ -190,6 +195,7 @@ def get_user_profile(request):
 
 
 @api_view(["GET"])
+@renderer_classes([JSONRenderer])
 def leaderboard(request):
     """
     Leaderboard with ranking logic:
@@ -232,6 +238,7 @@ def leaderboard(request):
 
 
 @api_view(["GET"])
+@renderer_classes([JSONRenderer])
 def leaderboard_campus(request):
     # Dictionary to aggregate by campus
     campus_data = defaultdict(lambda: {"total_xp": 0, "game_count": 0, "streak": 0, "user_count": 0})
@@ -357,6 +364,7 @@ SESSION_URL = "http://staging.mnj.restapis.services.resdex.com/dhwani-realtime-s
 
 
 @api_view(["POST"])
+@renderer_classes([JSONRenderer])
 def create_session(request):
     """
     API View to create session and call the external API.
@@ -587,6 +595,7 @@ def get_scenario_prompt():
 
 
 @api_view(["POST"])
+@renderer_classes([JSONRenderer])
 def save_transcript(request):
     """
     Capture transcript messages per username.
@@ -709,7 +718,7 @@ class EvaluateTranscriptView(APIView):
     """
     API endpoint to evaluate a user's transcript and store results in DB.
     """
-
+    renderer_classes = [JSONRenderer]
     def post(self, request, *args, **kwargs):
         username = request.data.get("username")
         if not username:
@@ -755,6 +764,7 @@ class EvaluateTranscriptView(APIView):
 fake = Faker()
 
 @api_view(["GET"])
+@renderer_classes([JSONRenderer])
 def get_user(request):
     # Generate a realistic unique name every time
     name = fake.name()

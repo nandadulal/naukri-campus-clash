@@ -1,6 +1,7 @@
 import os
 import random
 import requests
+import logging
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -14,6 +15,14 @@ from .models import DailyGameScore
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+
+try:
+    import google.generativeai as genai
+except Exception:
+    genai = None
+
+
+logger = logging.getLogger(__name__)
 
 
 

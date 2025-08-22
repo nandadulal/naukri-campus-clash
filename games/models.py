@@ -2,6 +2,9 @@ from django.db import models
 from django.db import models
 from django.utils import timezone
 from django.db.models import Sum
+from django.db import models
+from django.utils import timezone
+from django.db.models import Sum
 
 
 class VibeSession(models.Model):
@@ -13,16 +16,13 @@ class VibeSession(models.Model):
         return f"VibeSession(topic={self.topic}, created={self.created_at})"
 
 
-from django.db import models
-from django.utils import timezone
-from django.db.models import Sum
-
 class DailyGameScore(models.Model):
     user_name = models.CharField(max_length=100)
     date = models.DateField(default=timezone.now)
     score = models.IntegerField(default=0)
     game_count = models.IntegerField(default=0)  # Game count
     batches = models.JSONField(default=dict)  # Batches like {"batch1": 1, "batch2": 2}
+    campus_name = models.CharField(max_length=100)
 
     class Meta:
         unique_together = ("user_name", "date")

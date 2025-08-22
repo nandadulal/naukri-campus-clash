@@ -1,21 +1,29 @@
+# ===== Standard Library =====
 import os
 import re
+import json
+import uuid
 import random
-import requests
 import logging
+from collections import defaultdict
 
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
-from .models import VibeSession
+# ===== Third-Party Libraries =====
+import requests
+from faker import Faker
 
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
+# ===== Django & DRF =====
 from django.utils import timezone
-from .models import DailyGameScore
+from django.db.models import Sum, Count
 
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.views import APIView
+
+# ===== Project Imports =====
+from .models import VibeSession, DailyGameScore, Transcript, Evaluation
+from .serializers import TranscriptSerializer
+
 
 try:
     import google.generativeai as genai
@@ -73,12 +81,6 @@ def vibe_sets(request):
     return Response(default_payload, status=status.HTTP_200_OK)
 
 
-
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from django.utils import timezone
-from .models import DailyGameScore
-
 @api_view(["POST"])
 def update_user_profile(request):
     """
@@ -131,12 +133,6 @@ def update_user_profile(request):
     })
 
 
-
-import random
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from .models import DailyGameScore
-from django.db.models import Sum
 
 @api_view(["GET"])
 def get_user_profile(request):
@@ -193,91 +189,85 @@ def get_user_profile(request):
     })
 
 
-
-import random
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from .models import DailyGameScore
-from django.db.models import Sum
-
-# Dummy user data with some random XP and game count
-DUMMY_USERS = [
-    {"user_name": "Priya Sharma", "total_xp": 2840, "game_count": 47, "batches": {"batch1": 2}, "streak": 12},
-    {"user_name": "Arjun Patel", "total_xp": 2650, "game_count": 45, "batches": {"batch1": 3}, "streak": 10},
-    {"user_name": "Sneha Gupta", "total_xp": 2480, "game_count": 42, "batches": {"batch1": 1}, "streak": 8},
-    {"user_name": "Alex Kumar", "total_xp": 1290, "game_count": 30, "batches": {"batch2": 1}, "streak": 6},
-    {"user_name": "Amit Kumar", "total_xp": 1500, "game_count": 25, "batches": {"batch3": 2}, "streak": 5},
-    {"user_name": "Ravi Singh", "total_xp": 2100, "game_count": 40, "batches": {"batch4": 3}, "streak": 7},
-    {"user_name": "Anjali Yadav", "total_xp": 2200, "game_count": 38, "batches": {"batch5": 2}, "streak": 9},
-    {"user_name": "Neha Gupta", "total_xp": 1800, "game_count": 32, "batches": {"batch1": 4}, "streak": 6},
-    {"user_name": "Vishal Kumar", "total_xp": 2000, "game_count": 34, "batches": {"batch2": 1}, "streak": 7},
-    {"user_name": "Manoj Sharma", "total_xp": 1600, "game_count": 28, "batches": {"batch3": 3}, "streak": 5},
-]
-
 @api_view(["GET"])
 def leaderboard(request):
-    # Get all users from the database with their total XP, game count, batches, and streak
-    real_data = DailyGameScore.objects.values('id', 'user_name')\
-        .annotate(total_xp=Sum('score'))\
-        .order_by('-total_xp')  # Sorting by total XP
+    """
+    Leaderboard with ranking logic:
+    1. Sort by total_xp (higher is better)
+    2. If tie, sort by efficiency (xp/game_count, higher is better)
+    3. If still tie, sort by game_count (higher is better)
+    """
+
+    real_data = (
+        DailyGameScore.objects.values("user_name")
+        .annotate(total_xp=Sum("score"), game_count=Sum("game_count"))
+    )
 
     leaderboard = []
-    
-    # Append real data from the database
+
     for user in real_data:
-        user_name = user['user_name']
-        total_xp = user['total_xp']
-        user_id = user['id']  # Add ID from database
-
-        # Fetch the user's game count
-        game_count = DailyGameScore.objects.filter(user_name=user_name).count()
-
-        # Fetch the user's batches (aggregate batches into a dictionary)
-        batches = DailyGameScore.objects.filter(user_name=user_name).values('batches')
-        batch_data = {}
-        for batch in batches:
-            for batch_key, count in batch['batches'].items():
-                batch_data[batch_key] = batch_data.get(batch_key, 0) + count
-
-        # Placeholder for streak (implement your own streak logic)
-        streak = 10  # Placeholder value, replace it with your streak logic
-
-        # Generate random ranking between 1 and 1000
-        ranking = random.randint(1, 1000)
+        total_xp = user["total_xp"] or 0
+        game_count = user["game_count"] or 0
+        efficiency = total_xp / game_count if game_count > 0 else 0
 
         leaderboard.append({
-            'id': user_id,  # Include the database ID
-            'user_name': user_name,
-            'total_xp': total_xp,
-            'game_count': game_count,
-            'batches': batch_data,  # Store batches as a dictionary
-            'streak': streak,
-            'ranking': ranking,
+            "user_name": user["user_name"],
+            "total_xp": total_xp,
+            "game_count": game_count,
+            "efficiency": round(efficiency, 2),
         })
-    
-    # Now add dummy users data to the leaderboard for testing
-    for idx, dummy_user in enumerate(DUMMY_USERS, start=len(real_data) + 1):  # Start id after real data
+
+    # Sort with ranking logic
+    leaderboard.sort(
+        key=lambda x: (x["total_xp"], x["efficiency"], x["game_count"]),
+        reverse=True
+    )
+
+    # Assign rank numbers
+    for idx, user in enumerate(leaderboard, start=1):
+        user["rank"] = idx
+
+    return Response(leaderboard)
+
+
+@api_view(["GET"])
+def leaderboard_campus(request):
+    # Dictionary to aggregate by campus
+    campus_data = defaultdict(lambda: {"total_xp": 0, "game_count": 0, "streak": 0, "user_count": 0})
+
+    # === FETCH USERS DIRECTLY FROM DB ===
+    db_users = DailyGameScore.objects.values('campus_name', 'user_name')\
+        .annotate(total_xp=Sum('score'), game_count=Count('id'))
+
+    for user in db_users:
+        campus_name = user['campus_name'] or "Unknown"
+
+        campus_data[campus_name]["total_xp"] += user['total_xp'] or 0
+        campus_data[campus_name]["game_count"] += user['game_count'] or 0
+        # Placeholder streak logic (replace with your real streak calculation per user)
+        campus_data[campus_name]["streak"] += 10
+        campus_data[campus_name]["user_count"] += 1
+
+    # === PREPARE FINAL RESPONSE ===
+    leaderboard = []
+    for idx, (campus_name, data) in enumerate(campus_data.items(), start=1):
         leaderboard.append({
-            'id': idx,  # Sequential ID for dummy users
-            'user_name': dummy_user['user_name'],
-            'total_xp': dummy_user['total_xp'],
-            'game_count': dummy_user['game_count'],
-            'batches': dummy_user['batches'],
-            'streak': dummy_user['streak'],
-            'ranking': random.randint(1, 1000)  # Random ranking for dummy user
+            "id": idx,
+            "campus_name": campus_name,
+            "total_xp": data["total_xp"],
+            "game_count": data["game_count"],
+            "avg_streak": round(data["streak"] / data["user_count"], 2) if data["user_count"] > 0 else 0,
+            "user_count": data["user_count"],
+            "ranking": random.randint(1, 1000)  # Random ranking per campus
         })
-    
-    # Sort by total XP to simulate leaderboard (XP based)
-    leaderboard.sort(key=lambda x: x['total_xp'], reverse=True)
+
+    # Sort by total XP
+    leaderboard.sort(key=lambda x: x["total_xp"], reverse=True)
 
     return Response(leaderboard)
 
 
 
-import uuid
-import logging
-
-logger = logging.getLogger(__name__)
 
 DEFAULT_TTS_CONFIG = {
     'voice_key': 'rfkTsdZrVWEVhDycUYn9',
@@ -521,11 +511,6 @@ def get_scenario_prompt():
         return None
 
 
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
-from .models import Transcript
-from .serializers import TranscriptSerializer
 
 @api_view(["POST"])
 def save_transcript(request):
@@ -646,17 +631,6 @@ def evaluate_transcript(user_name: str):
         return None
 
 
-
-import json
-import re
-import logging
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .models import Evaluation
-
-logger = logging.getLogger(__name__)
-
 class EvaluateTranscriptView(APIView):
     """
     API endpoint to evaluate a user's transcript and store results in DB.
@@ -703,13 +677,6 @@ class EvaluateTranscriptView(APIView):
             return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
-
-
-
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from faker import Faker
 
 fake = Faker()
 

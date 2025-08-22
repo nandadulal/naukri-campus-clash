@@ -282,8 +282,8 @@ DEFAULT_TTS_CONFIG = {
 }
 
 # Define the two prompts
-serious_prompt = "Please describe a challenging professional experience and how you overcame it."
-conversational_prompt = "Tell me about a fun project you enjoyed working on recently."
+# serious_prompt = "Please describe a challenging professional experience and how you overcame it."
+# conversational_prompt = "Tell me about a fun project you enjoyed working on recently."
 
 headers = {
         'Content-Type': 'application/json',
@@ -293,66 +293,66 @@ headers = {
 
 SESSION_URL = "http://staging.mnj.restapis.services.resdex.com/dhwani-realtime-services/dhwani-dynamic/v1/set_user_session_config"
 
-def get_prompt(context="serious"):
-    """
-    Return prompt text based on the context.
+# def get_prompt(context="serious"):
+#     """
+#     Return prompt text based on the context.
     
-    Args:
-        context (str): Either 'serious' or 'conversational'. Defaults to 'serious'.
+#     Args:
+#         context (str): Either 'serious' or 'conversational'. Defaults to 'serious'.
         
-    Returns:
-        str: The selected prompt text.
-    """
-    if context.lower() == "conversational":
-        return conversational_prompt
-    else:
-        return serious_prompt
+#     Returns:
+#         str: The selected prompt text.
+#     """
+#     if context.lower() == "conversational":
+#         return conversational_prompt
+#     else:
+#         return serious_prompt
 
-def prepare_session_request_data(tts_config=None, context="serious"):
-    """
-    Prepare request data for Dhwani session configuration with UUID-based context and selected prompt.
+# def prepare_session_request_data(tts_config=None, context="serious"):
+#     """
+#     Prepare request data for Dhwani session configuration with UUID-based context and selected prompt.
     
-    Args:
-        tts_config (dict, optional): Custom TTS configuration.
-        context (str): 'serious' or 'conversational' to select prompt type.
+#     Args:
+#         tts_config (dict, optional): Custom TTS configuration.
+#         context (str): 'serious' or 'conversational' to select prompt type.
         
-    Returns:
-        dict: Prepared session request payload.
-    """
-    try:
-        context_id = str(uuid.uuid4())
-        prompt_id = str(uuid.uuid4())
-        tts_config = tts_config or DEFAULT_TTS_CONFIG
+#     Returns:
+#         dict: Prepared session request payload.
+#     """
+#     try:
+#         context_id = str(uuid.uuid4())
+#         prompt_id = str(uuid.uuid4())
+#         tts_config = tts_config or DEFAULT_TTS_CONFIG
 
-        try:
-            prompt = get_prompt(context)
-            logger.info("Prompt generated successfully", extra={"prompt": prompt})
-        except Exception as e:
-            logger.exception("Failed to generate prompt", extra={"error": str(e)})
-            prompt = None
+#         try:
+#             prompt = get_prompt(context)
+#             logger.info("Prompt generated successfully", extra={"prompt": prompt})
+#         except Exception as e:
+#             logger.exception("Failed to generate prompt", extra={"error": str(e)})
+#             prompt = None
 
-        request_data = {
-            "context_id": context_id,
-            "interruption_enabled": True,
-            "prompt_id": 123456,
-            "eval_prompt_id": "",
-            "prompt_context": {},
-            "metadata": {
-                "context": "ai-interview"
-            },
-            "interaction_model_config": {
-                "tts": tts_config
-            }
-        }
+#         request_data = {
+#             "context_id": context_id,
+#             "interruption_enabled": True,
+#             "prompt_id": 123456,
+#             "eval_prompt_id": "",
+#             "prompt_context": {},
+#             "metadata": {
+#                 "context": "ai-interview"
+#             },
+#             "interaction_model_config": {
+#                 "tts": tts_config
+#             }
+#         }
 
-        if prompt:
-            request_data["prompt"] = prompt
+#         if prompt:
+#             request_data["prompt"] = prompt
 
-        return request_data
+#         return request_data
 
-    except Exception as e:
-        logger.exception("Failed to prepare session request data", extra={"error": str(e)})
-        raise Exception(f"Failed to prepare session request data: {str(e)}")
+#     except Exception as e:
+#         logger.exception("Failed to prepare session request data", extra={"error": str(e)})
+#         raise Exception(f"Failed to prepare session request data: {str(e)}")
 
 
 

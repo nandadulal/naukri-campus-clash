@@ -261,18 +261,92 @@ def leaderboard(request):
 
 
 
+import uuid
+import logging
+
+logger = logging.getLogger(__name__)
+
+DEFAULT_TTS_CONFIG = {
+    'voice_key': 'rfkTsdZrVWEVhDycUYn9',
+    'type': 'Eleven-Labs',
+    'metadata': {
+        'similarity_boost': 0,
+        'stability': 1,
+        'use_speaker_boost': False,
+        'style': 0
+    }
+}
+
+# Define the two prompts
+serious_prompt = "Please describe a challenging professional experience and how you overcame it."
+conversational_prompt = "Tell me about a fun project you enjoyed working on recently."
+
+headers = {
+        'Content-Type': 'application/json',
+        'appid': 491,
+    }
 
 
+def get_prompt(context="serious"):
+    """
+    Return prompt text based on the context.
+    
+    Args:
+        context (str): Either 'serious' or 'conversational'. Defaults to 'serious'.
+        
+    Returns:
+        str: The selected prompt text.
+    """
+    if context.lower() == "conversational":
+        return conversational_prompt
+    else:
+        return serious_prompt
 
+def prepare_session_request_data(tts_config=None, context="serious"):
+    """
+    Prepare request data for Dhwani session configuration with UUID-based context and selected prompt.
+    
+    Args:
+        tts_config (dict, optional): Custom TTS configuration.
+        context (str): 'serious' or 'conversational' to select prompt type.
+        
+    Returns:
+        dict: Prepared session request payload.
+    """
+    try:
+        context_id = str(uuid.uuid4())
+        prompt_id = str(uuid.uuid4())
+        tts_config = tts_config or DEFAULT_TTS_CONFIG
 
+        try:
+            prompt = get_prompt(context)
+            logger.info("Prompt generated successfully", extra={"prompt": prompt})
+        except Exception as e:
+            logger.exception("Failed to generate prompt", extra={"error": str(e)})
+            prompt = None
 
+        request_data = {
+            "context_id": context_id,
+            "interruption_enabled": True,
+            "prompt_id": 123456,
+            "eval_prompt_id": "",
+            "prompt_context": {},
+            "metadata": {
+                "context": "ai-interview"
+            },
+            "interaction_model_config": {
+                "tts": tts_config
+            }
+        }
 
+        if prompt:
+            request_data["prompt"] = prompt
 
+        return request_data
 
-
-
-
-
+    except Exception as e:
+        logger.exception("Failed to prepare session request data", extra={"error": str(e)})
+        raise Exception(f"Failed to prepare session request data: {str(e)}")
 
 
 @api_view(["GET"])

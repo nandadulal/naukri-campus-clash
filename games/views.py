@@ -136,60 +136,6 @@ def update_user_profile(request):
         "total_score": score_obj.total_score,
     })
 
-# @api_view(["GET"])
-# @renderer_classes([JSONRenderer])
-# def get_user_profile(request):
-#     """
-#     Request:
-#     {
-#       "user_name": "john"
-#     }
-
-#     Response:
-#     {
-#       "user_name": "john",
-#       "total_xp": 1000,
-#       "game_count": 20,
-#       "batches": {"batch1": 2, "batch2": 1},
-#       "streak": 10,
-#       "ranking": 473
-#     }
-#     """
-#     user_name = request.GET.get("user_name")
-
-#     if not user_name:
-#         return Response({"error": "user_name is required"}, status=400)
-
-#     # Get the user's total XP (sum of all scores)
-#     total_xp = DailyGameScore.objects.filter(user_name=user_name).aggregate(total=Sum('score'))["total"] or 0
-
-#     # Get the total number of games played by the user
-#     game_count = DailyGameScore.objects.filter(user_name=user_name).count()
-
-#     # Get batches (badges) and their counts for the user
-#     batches = DailyGameScore.objects.filter(user_name=user_name).values('batches')
-    
-#     # Aggregate batches (badges) and their counts
-#     aggregated_batches = {}
-#     for batch in batches:
-#         batch_data = batch.get('batches', {})
-#         for batch_name, count in batch_data.items():
-#             aggregated_batches[batch_name] = aggregated_batches.get(batch_name, 0) + count
-
-#     # Optionally, calculate the streak (this is a placeholder logic)
-#     streak = 10  # Placeholder, replace with actual logic to calculate streak
-
-#     # Generate a random ranking between 1 and 1000
-#     ranking = random.randint(1, 1000)
-
-#     return Response({
-#         "user_name": user_name,
-#         "total_xp": total_xp,
-#         "game_count": game_count,
-#         "batches": aggregated_batches,  # Showing batches with their count
-#         "streak": streak,
-#         "ranking": ranking  # Random ranking between 1 and 1000
-#     })
 
 
 @api_view(["GET"])
@@ -643,8 +589,6 @@ How you (the AI) should respond based on student's input:
 *   **If noise or distortion is detected:** Say: "I'm having trouble hearing you clearly. Please check your audio and try again."
 ## End of Session:
 *   Politely conclude with: "Thank you for your time today. It was great speaking with you. Have a wonderful day! Please click 'End'." """
-
-
 
 
 def get_scenario_prompt():

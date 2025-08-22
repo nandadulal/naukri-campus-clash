@@ -136,62 +136,60 @@ def update_user_profile(request):
         "total_score": score_obj.total_score,
     })
 
+# @api_view(["GET"])
+# @renderer_classes([JSONRenderer])
+# def get_user_profile(request):
+#     """
+#     Request:
+#     {
+#       "user_name": "john"
+#     }
 
+#     Response:
+#     {
+#       "user_name": "john",
+#       "total_xp": 1000,
+#       "game_count": 20,
+#       "batches": {"batch1": 2, "batch2": 1},
+#       "streak": 10,
+#       "ranking": 473
+#     }
+#     """
+#     user_name = request.GET.get("user_name")
 
-@api_view(["GET"])
-@renderer_classes([JSONRenderer])
-def get_user_profile(request):
-    """
-    Request:
-    {
-      "user_name": "john"
-    }
+#     if not user_name:
+#         return Response({"error": "user_name is required"}, status=400)
 
-    Response:
-    {
-      "user_name": "john",
-      "total_xp": 1000,
-      "game_count": 20,
-      "batches": {"batch1": 2, "batch2": 1},
-      "streak": 10,
-      "ranking": 473
-    }
-    """
-    user_name = request.GET.get("user_name")
+#     # Get the user's total XP (sum of all scores)
+#     total_xp = DailyGameScore.objects.filter(user_name=user_name).aggregate(total=Sum('score'))["total"] or 0
 
-    if not user_name:
-        return Response({"error": "user_name is required"}, status=400)
+#     # Get the total number of games played by the user
+#     game_count = DailyGameScore.objects.filter(user_name=user_name).count()
 
-    # Get the user's total XP (sum of all scores)
-    total_xp = DailyGameScore.objects.filter(user_name=user_name).aggregate(total=Sum('score'))["total"] or 0
-
-    # Get the total number of games played by the user
-    game_count = DailyGameScore.objects.filter(user_name=user_name).count()
-
-    # Get batches (badges) and their counts for the user
-    batches = DailyGameScore.objects.filter(user_name=user_name).values('batches')
+#     # Get batches (badges) and their counts for the user
+#     batches = DailyGameScore.objects.filter(user_name=user_name).values('batches')
     
-    # Aggregate batches (badges) and their counts
-    aggregated_batches = {}
-    for batch in batches:
-        batch_data = batch.get('batches', {})
-        for batch_name, count in batch_data.items():
-            aggregated_batches[batch_name] = aggregated_batches.get(batch_name, 0) + count
+#     # Aggregate batches (badges) and their counts
+#     aggregated_batches = {}
+#     for batch in batches:
+#         batch_data = batch.get('batches', {})
+#         for batch_name, count in batch_data.items():
+#             aggregated_batches[batch_name] = aggregated_batches.get(batch_name, 0) + count
 
-    # Optionally, calculate the streak (this is a placeholder logic)
-    streak = 10  # Placeholder, replace with actual logic to calculate streak
+#     # Optionally, calculate the streak (this is a placeholder logic)
+#     streak = 10  # Placeholder, replace with actual logic to calculate streak
 
-    # Generate a random ranking between 1 and 1000
-    ranking = random.randint(1, 1000)
+#     # Generate a random ranking between 1 and 1000
+#     ranking = random.randint(1, 1000)
 
-    return Response({
-        "user_name": user_name,
-        "total_xp": total_xp,
-        "game_count": game_count,
-        "batches": aggregated_batches,  # Showing batches with their count
-        "streak": streak,
-        "ranking": ranking  # Random ranking between 1 and 1000
-    })
+#     return Response({
+#         "user_name": user_name,
+#         "total_xp": total_xp,
+#         "game_count": game_count,
+#         "batches": aggregated_batches,  # Showing batches with their count
+#         "streak": streak,
+#         "ranking": ranking  # Random ranking between 1 and 1000
+#     })
 
 
 @api_view(["GET"])
@@ -235,6 +233,93 @@ def leaderboard(request):
         user["rank"] = idx
 
     return Response(leaderboard)
+
+@api_view(["GET"])
+@renderer_classes([JSONRenderer])
+def get_user_profile(request):
+    """
+    Request:
+    {
+      "user_name": "john"
+    }
+
+    Response:
+    {
+      "user_name": "john",
+      "campus_name": "IIT Bombay",
+      "total_xp": 1000,
+      "game_count": 20,
+      "batches": {"batch1": 2, "batch2": 1},
+      "streak": 10,
+      "ranking": 2
+    }
+    """
+    user_name = request.GET.get("user_name")
+
+    if not user_name:
+        return Response({"error": "user_name is required"}, status=400)
+
+    # Get campus name for the user
+    campus_name = DailyGameScore.objects.filter(user_name=user_name).values_list("campus_name", flat=True).first()
+
+    # Get the user's total XP (sum of all scores)
+    total_xp = DailyGameScore.objects.filter(user_name=user_name).aggregate(total=Sum('score'))["total"] or 0
+
+    # Get the total number of games played by the user
+    game_count = DailyGameScore.objects.filter(user_name=user_name).count()
+
+    # Get batches (badges) and their counts for the user
+    batches = DailyGameScore.objects.filter(user_name=user_name).values('batches')
+    
+    # Aggregate batches (badges) and their counts
+    aggregated_batches = {}
+    for batch in batches:
+        batch_data = batch.get('batches', {})
+        for batch_name, count in batch_data.items():
+            aggregated_batches[batch_name] = aggregated_batches.get(batch_name, 0) + count
+
+    # Placeholder streak logic
+    streak = 10  
+
+    # === Ranking logic (same as leaderboard) ===
+    all_users = (
+        DailyGameScore.objects.values("user_name")
+        .annotate(total_xp=Sum("score"), game_count=Sum("game_count"))
+    )
+
+    leaderboard = []
+    for u in all_users:
+        xp = u["total_xp"] or 0
+        games = u["game_count"] or 0
+        efficiency = xp / games if games > 0 else 0
+        leaderboard.append({
+            "user_name": u["user_name"],
+            "total_xp": xp,
+            "game_count": games,
+            "efficiency": efficiency,
+        })
+
+    leaderboard.sort(
+        key=lambda x: (x["total_xp"], x["efficiency"], x["game_count"]),
+        reverse=True
+    )
+
+    ranking = None
+    for idx, u in enumerate(leaderboard, start=1):
+        if u["user_name"] == user_name:
+            ranking = idx
+            break
+
+    return Response({
+        "user_name": user_name,
+        "campus_name": campus_name,
+        "total_xp": total_xp,
+        "game_count": game_count,
+        "batches": aggregated_batches,
+        "streak": streak,
+        "ranking": ranking
+    })
+
 
 
 @api_view(["GET"])

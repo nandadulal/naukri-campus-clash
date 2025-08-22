@@ -10,14 +10,14 @@ except Exception:
     genai = None
 
 logger = logging.getLogger(__name__)
-DEFAULT_COUNT = 10
+DEFAULT_COUNT = 5
 
 
 vibe_question_prompt = """
 You are a question generator for a game called "Vibe Check" on Naukri Campus.
 
 🎯 Overall Goal:
-Generate 10 *distinct, varied, and refreshing* 'Vibe Check' questions. Ensure no question is repeated within the same set of 10 questions.
+Generate 5 *distinct, varied, and refreshing* 'Vibe Check' questions. Ensure no question is repeated within the same set of 5 questions.
 
 👥 Target Audience and Context:
 - Audience: 'Naukri Campus' users – college students, recent grads, early career professionals.
@@ -32,7 +32,7 @@ Generate 10 *distinct, varied, and refreshing* 'Vibe Check' questions. Ensure no
 - Each question must describe a relevant scenario, dilemma, or preference.
 - Be concise, direct, engaging, and end with a question mark.
 - Length: 10–15 words.
-- **Crucially, ensure each set of 10 questions is unique and fresh, avoiding repetition from previous runs and within the current set.**
+- **Crucially, ensure each set of 5 questions is unique and fresh, avoiding repetition from previous runs and within the current set.**
 
 ⚖️ Option Specifications:
 - Each question must have exactly two contrasting options.
@@ -45,7 +45,7 @@ Generate 10 *distinct, varied, and refreshing* 'Vibe Check' questions. Ensure no
   [First option]  
   [Second option]
 - Each option on a new line.
-- NO intro/outro text; just the 10 questions in the specified format.
+- NO intro/outro text; just the 5 questions in the specified format.
 
 📌 Illustrative Examples:
 
@@ -61,7 +61,7 @@ Q4. You have two internship offers. Which one do you choose?
 Big, established company with clear career paths  
 Small, rapidly growing startup with diverse roles
 
-👉 Now, generate the 10 questions in the exact same format.
+👉 Now, generate the 5 questions in the exact same format.
 """
 
 import os
@@ -77,7 +77,7 @@ except Exception:
     genai = None
 
 logger = logging.getLogger(__name__)
-DEFAULT_COUNT = 10
+DEFAULT_COUNT = 5
 
 def parse_gemini_text_to_sets(text):
     lines = [line.strip() for line in text.strip().splitlines() if line.strip()]

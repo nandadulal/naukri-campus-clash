@@ -1,4 +1,6 @@
 import random
+import requests
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -287,6 +289,8 @@ headers = {
     }
 
 
+SESSION_URL = "http://staging.mnj.restapis.services.resdex.com/dhwani-realtime-services/dhwani-dynamic/v1/set_user_session_config"
+
 def get_prompt(context="serious"):
     """
     Return prompt text based on the context.
@@ -347,6 +351,62 @@ def prepare_session_request_data(tts_config=None, context="serious"):
     except Exception as e:
         logger.exception("Failed to prepare session request data", extra={"error": str(e)})
         raise Exception(f"Failed to prepare session request data: {str(e)}")
+
+
+
+@api_view(["POST"])
+def create_session(request):
+    """
+    API View to create session and call the external API.
+    Accepts 'context' ('serious' or 'conversational') and 'username' in the request body.
+    """
+
+    # Get parameters from request body
+    context = request.data.get('context', 'serious')  # Default to 'serious'
+    username = request.data.get('username')
+
+    if not username:
+        return Response({"error": "username is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        # Prepare the session request data
+        context_id = str(uuid.uuid4())
+        prompt = get_prompt(context)
+
+        request_data = {
+            "context_id": context_id,
+            "interruption_enabled": True,
+            "prompt_id": str(uuid.uuid4()),
+            "eval_prompt_id": "",
+            "prompt_context": {},
+            "metadata": {
+                "context": "ai-interview"
+            },
+            "interaction_model_config": {
+                "tts": DEFAULT_TTS_CONFIG
+            },
+            "prompt": prompt
+        }
+
+        # Prepare headers for the request
+        headers = {
+            'Content-Type': 'application/json',
+            'appid': '491',  # Assuming 'appid' is a static value
+        }
+
+        # Send the request to the external service (SESSION_URL)
+        response = requests.post(SESSION_URL, json=request_data, headers=headers)
+        
+        # Handle the response
+        if response.status_code == 200:
+            return Response(response.json(), status=status.HTTP_200_OK)
+        else:
+            logger.error(f"Failed to get response: {response.text}")
+            return Response({"error": "Failed to get a valid response from the external service."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    except Exception as e:
+        logger.exception("Failed to create session", extra={"error": str(e)})
+        return Response({"error": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["GET"])

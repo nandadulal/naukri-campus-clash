@@ -689,12 +689,12 @@ Your output must be in the following JSON format ONLY:
 
     {{
   "strengths": [
-    "Specific strength identified based on transcript.",
-    "Another specific strength with examples if applicable."
+    "Specific strength identified based on transcript. (Max 20 words)",
+    "Another specific strength with examples if applicable. (Max 20 words)"
   ],
   "areas_of_improvement": [
-    "Specific area for improvement with actionable advice.",
-    "Another area for improvement, linking to skill gaps or missed opportunities."
+    "Specific area for improvement with actionable advice. (Max 20 words)",
+    "Another area for improvement, linking to skill gaps or missed opportunities. (Max 20 words)"
   ],
   "xp": [Score out of 100]
     }}

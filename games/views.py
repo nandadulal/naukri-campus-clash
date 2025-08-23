@@ -790,7 +790,7 @@ class EvaluateTranscriptView(APIView):
 
 
 
-fake = Faker()
+fake = Faker("en_IN")
 
 @api_view(["GET"])
 @renderer_classes([JSONRenderer])

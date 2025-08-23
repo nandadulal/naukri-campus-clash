@@ -14,6 +14,7 @@ from faker import Faker
 # ===== Django & DRF =====
 from django.utils import timezone
 from django.db.models import Sum, Count
+from django.db.models import Sum, OuterRef, Subquery
 
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -148,13 +149,22 @@ def leaderboard(request):
     3. If still tie, sort by game_count (higher is better)
     """
 
+    # Subquery to fetch one campus_name per user (latest by id)
+    campus_subquery = DailyGameScore.objects.filter(
+        user_name=OuterRef("user_name")
+    ).order_by("-id").values("campus_name")[:1]
+
     real_data = (
-        DailyGameScore.objects.values("user_name", "campus_name")
-        .annotate(total_xp=Sum("score"), game_count=Sum("game_count"))
+        DailyGameScore.objects
+        .values("user_name")  # only group by user
+        .annotate(
+            total_xp=Sum("score"),
+            game_count=Sum("game_count"),
+            campus_name=Subquery(campus_subquery),
+        )
     )
 
     leaderboard = []
-
     for user in real_data:
         total_xp = user["total_xp"] or 0
         game_count = user["game_count"] or 0
@@ -162,7 +172,7 @@ def leaderboard(request):
 
         leaderboard.append({
             "user_name": user["user_name"],
-            "campus_name": user["campus_name"],   # ✅ added campus_name
+            "campus_name": user["campus_name"],  # ✅ campus name without grouping
             "total_xp": total_xp,
             "game_count": game_count,
             "efficiency": round(efficiency, 2),
@@ -179,6 +189,8 @@ def leaderboard(request):
         user["rank"] = idx
 
     return Response(leaderboard)
+
+
 
 @api_view(["GET"])
 @renderer_classes([JSONRenderer])

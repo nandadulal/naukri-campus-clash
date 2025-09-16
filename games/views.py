@@ -656,8 +656,8 @@ def extract_scenario_title(scenario_text):
     logger.debug(f"extract_scenario_title: Input text length: {len(scenario_text)}")
     logger.debug(f"extract_scenario_title: First 200 chars: {scenario_text[:200]}")
     
-    # Pattern to match "Title: [title text]" - matches the actual format from Gemini
-    pattern = r"Title:\s*(.+?)(?:\n|$)"
+    # Pattern to match "Title : [title text]" - matches the actual format from Gemini
+    pattern = r"Title\s*:\s*(.+?)(?:\n|$)"
     match = re.search(pattern, scenario_text, re.IGNORECASE | re.MULTILINE)
     
     if match:
@@ -691,8 +691,8 @@ def extract_scenario_description(scenario_text):
     if not scenario_text:
         return None
     
-    # Pattern to match "Description: [description text]" - matches the actual format from Gemini
-    pattern = r"Description:\s*(.+?)(?:\n|$)"
+    # Pattern to match "Description : [description text]" - matches the actual format from Gemini
+    pattern = r"Description\s*:\s*(.+?)(?:\n|$)"
     match = re.search(pattern, scenario_text, re.IGNORECASE | re.MULTILINE)
     
     if match:

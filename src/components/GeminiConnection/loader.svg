@@ -1,0 +1,22 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <circle cx="60" cy="60" r="54" stroke="url(#grad)" stroke-width="8" stroke-linecap="round"
+    stroke-dasharray="283" stroke-dashoffset="75">
+    <animateTransform
+      attributeName="transform"
+      type="rotate"
+      from="0 60 60"
+      to="360 60 60"
+      dur="1.2s"
+      repeatCount="indefinite"/>
+  </circle>
+  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+        font-size="20" font-weight="bold" font-family="Arial, sans-serif" fill="#333">
+    AI
+  </text>
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#007bff"/> <!-- Naukri Blue -->
+      <stop offset="100%" stop-color="#ff6f00"/> <!-- Naukri Orange -->
+    </linearGradient>
+  </defs>
+</svg>

@@ -10,7 +10,7 @@ const mockData = {
       gradient: "from-blue-400 to-purple-600",
       played: "1k played",
       rating: "4.5★",
-      url: "/vibe",
+      url: "/gamification-ui/vibe",
       logo: "Amazon"
     },
     {
@@ -24,7 +24,7 @@ const mockData = {
       played: "2.5k played",
       rating: "4.1★",
       logo: "Airtel",
-      url: "/audio-chat"
+      url: "/gamification-ui/audio-chat"
     },
     {
       id: 3,

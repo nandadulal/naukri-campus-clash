@@ -438,6 +438,12 @@ def create_session(request):
         # Prepare the session request data
         context_id = str(uuid.uuid4())
         prompt = get_scenario_prompt()
+        
+        # Extract scenario title
+        scenario_title = None
+        if prompt:
+            scenario_title = extract_scenario_title(prompt)
+            logger.info(f"Extracted scenario title: {scenario_title}")
 
         request_data = {
             "context_id": context_id,
@@ -465,7 +471,11 @@ def create_session(request):
         
         # Handle the response
         if response.status_code == 200:
-            return Response(response.json(), status=status.HTTP_200_OK)
+            response_data = response.json()
+            # Add scenario title to the response
+            if scenario_title:
+                response_data["scenario_title"] = scenario_title
+            return Response(response_data, status=status.HTTP_200_OK)
         else:
             logger.error(f"Failed to get response: {response.text}")
             return Response({"error": "Failed to get a valid response from the external service."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -615,6 +625,28 @@ How you (the AI) should respond based on student's input:
 *   **If noise or distortion is detected:** Say: "I'm having trouble hearing you clearly. Please check your audio and try again."
 ## End of Session:
 *   Politely conclude with: "Thank you for your time today. It was great speaking with you. Have a wonderful day! Please click 'End'." """
+
+
+def extract_scenario_title(scenario_text):
+    """
+    Extract the title from scenario text.
+    Looks for pattern: "Title: [title text]"
+    Returns the title or None if not found.
+    """
+    if not scenario_text:
+        return None
+    
+    # Pattern to match "Title: [title text]" - matches the actual format from Gemini
+    pattern = r"Title:\s*(.+?)(?:\n|$)"
+    match = re.search(pattern, scenario_text, re.IGNORECASE | re.MULTILINE)
+    
+    if match:
+        title = match.group(1).strip()
+        # Remove any brackets if present
+        title = re.sub(r'^\[|\]$', '', title)
+        return title
+    
+    return None
 
 
 def get_scenario_prompt():

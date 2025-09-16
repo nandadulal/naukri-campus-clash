@@ -301,22 +301,24 @@ def leaderboard_campus(request):
 
     # === PREPARE FINAL RESPONSE ===
     leaderboard = []
-    for idx, (campus_name, data) in enumerate(campus_data.items(), start=1):
+    for campus_name, data in campus_data.items():
         leaderboard.append({
-            "id": idx,
             "campus_name": campus_name,
             "total_xp": data["total_xp"],
             "game_count": data["game_count"],
             "avg_streak": round(data["streak"] / data["user_count"], 2) if data["user_count"] > 0 else 0,
             "user_count": data["user_count"],
-            "ranking": random.randint(1, 1000)  # Random ranking per campus
         })
 
     # Sort by total XP
     leaderboard.sort(key=lambda x: x["total_xp"], reverse=True)
 
-    return Response(leaderboard)
+    # Assign sequential rankings after sorting
+    for idx, campus in enumerate(leaderboard, start=1):
+        campus["id"] = idx
+        campus["ranking"] = idx
 
+    return Response(leaderboard)
 
 
 

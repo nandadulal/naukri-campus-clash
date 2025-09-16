@@ -301,22 +301,24 @@ def leaderboard_campus(request):
 
     # === PREPARE FINAL RESPONSE ===
     leaderboard = []
-    for idx, (campus_name, data) in enumerate(campus_data.items(), start=1):
+    for campus_name, data in campus_data.items():
         leaderboard.append({
-            "id": idx,
             "campus_name": campus_name,
             "total_xp": data["total_xp"],
             "game_count": data["game_count"],
             "avg_streak": round(data["streak"] / data["user_count"], 2) if data["user_count"] > 0 else 0,
             "user_count": data["user_count"],
-            "ranking": random.randint(1, 1000)  # Random ranking per campus
         })
 
     # Sort by total XP
     leaderboard.sort(key=lambda x: x["total_xp"], reverse=True)
 
-    return Response(leaderboard)
+    # Assign sequential rankings after sorting
+    for idx, campus in enumerate(leaderboard, start=1):
+        campus["id"] = idx
+        campus["ranking"] = idx
 
+    return Response(leaderboard)
 
 
 
@@ -412,6 +414,7 @@ def create_session(request):
     """
     API View to create session and call the external API.
     Accepts 'context' ('serious' or 'conversational') and 'username' in the request body.
+    Clears the user's transcript when starting a new session.
     """
 
     # Get parameters from request body
@@ -422,9 +425,39 @@ def create_session(request):
         return Response({"error": "username is required"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
+        # Clear user's transcript for new session
+        try:
+            transcript, created = Transcript.objects.get_or_create(user_name=username)
+            transcript.messages = []  # Reset messages to empty list
+            transcript.save()
+            logger.info(f"Cleared transcript for user: {username}")
+        except Exception as transcript_error:
+            logger.warning(f"Failed to clear transcript for user {username}: {transcript_error}")
+            # Continue with session creation even if transcript clearing fails
+
         # Prepare the session request data
         context_id = str(uuid.uuid4())
         prompt = get_scenario_prompt()
+        
+        # Extract scenario title and description
+        scenario_title = None
+        scenario_description = None
+        if prompt:
+            # Extract title
+            try:
+                scenario_title = extract_scenario_title(prompt)
+                logger.info(f"Extracted scenario title: {scenario_title}")
+            except Exception as title_error:
+                logger.exception(f"Failed to extract scenario title: {title_error}")
+                # Continue with session creation even if title extraction fails
+            
+            # Extract description
+            try:
+                scenario_description = extract_scenario_description(prompt)
+                logger.info(f"Extracted scenario description: {scenario_description}")
+            except Exception as description_error:
+                logger.exception(f"Failed to extract scenario description: {description_error}")
+                # Continue with session creation even if description extraction fails
 
         request_data = {
             "context_id": context_id,
@@ -452,7 +485,13 @@ def create_session(request):
         
         # Handle the response
         if response.status_code == 200:
-            return Response(response.json(), status=status.HTTP_200_OK)
+            response_data = response.json()
+            # Add scenario title and description to the response
+            if scenario_title:
+                response_data["scenario_title"] = scenario_title
+            if scenario_description:
+                response_data["scenario_description"] = scenario_description
+            return Response(response_data, status=status.HTTP_200_OK)
         else:
             logger.error(f"Failed to get response: {response.text}")
             return Response({"error": "Failed to get a valid response from the external service."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -602,6 +641,67 @@ How you (the AI) should respond based on student's input:
 *   **If noise or distortion is detected:** Say: "I'm having trouble hearing you clearly. Please check your audio and try again."
 ## End of Session:
 *   Politely conclude with: "Thank you for your time today. It was great speaking with you. Have a wonderful day! Please click 'End'." """
+
+
+def extract_scenario_title(scenario_text):
+    """
+    Extract the title from scenario text.
+    Looks for pattern: "Title: [title text]"
+    Returns the title or None if not found.
+    """
+    if not scenario_text:
+        logger.warning("extract_scenario_title: scenario_text is None or empty")
+        return None
+    
+    logger.debug(f"extract_scenario_title: Input text length: {len(scenario_text)}")
+    logger.debug(f"extract_scenario_title: First 200 chars: {scenario_text[:200]}")
+    
+    # Pattern to match "Title : [title text]" - matches the actual format from Gemini
+    pattern = r"Title\s*:\s*(.+?)(?:\n|$)"
+    match = re.search(pattern, scenario_text, re.IGNORECASE | re.MULTILINE)
+    
+    if match:
+        title = match.group(1).strip()
+        # Remove any brackets if present
+        title = re.sub(r'^\[|\]$', '', title)
+        logger.info(f"extract_scenario_title: Successfully extracted title: '{title}'")
+        return title
+    else:
+        logger.warning("extract_scenario_title: No title pattern found in text")
+        # Try alternative patterns for debugging
+        if "Title" in scenario_text:
+            logger.warning("extract_scenario_title: 'Title' found in text but pattern didn't match")
+            # Find all lines containing "Title"
+            lines = scenario_text.split('\n')
+            for i, line in enumerate(lines):
+                if 'Title' in line:
+                    logger.warning(f"extract_scenario_title: Line {i} with 'Title': '{line}'")
+        else:
+            logger.warning("extract_scenario_title: 'Title' not found anywhere in text")
+    
+    return None
+
+
+def extract_scenario_description(scenario_text):
+    """
+    Extract the description from scenario text.
+    Looks for pattern: "Description: [description text]"
+    Returns the description or None if not found.
+    """
+    if not scenario_text:
+        return None
+    
+    # Pattern to match "Description : [description text]" - matches the actual format from Gemini
+    pattern = r"Description\s*:\s*(.+?)(?:\n|$)"
+    match = re.search(pattern, scenario_text, re.IGNORECASE | re.MULTILINE)
+    
+    if match:
+        description = match.group(1).strip()
+        # Remove any brackets if present
+        description = re.sub(r'^\[|\]$', '', description)
+        return description
+    
+    return None
 
 
 def get_scenario_prompt():

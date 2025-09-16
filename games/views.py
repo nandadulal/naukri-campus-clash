@@ -186,11 +186,16 @@ def leaderboard(request):
         efficiency = total_xp / game_count if game_count > 0 else 0
         campus_name = user["campus_name"]
 
-        # Check if campus_name is null, empty, or "Unknown"
-        if not campus_name or campus_name.strip() == "" or campus_name.lower() == "unknown":
+        # Debug logging for campus names
+        logger.debug(f"User {user['user_name']} has campus_name: '{campus_name}' (type: {type(campus_name)})")
+        
+        # Check if campus_name is null, empty, or "Unknown" (any case variation)
+        if not campus_name or campus_name.strip() == "" or campus_name.strip().lower() in ["unknown", "null", "none"]:
             # Assign a college name to this user
             college_name = good_colleges[college_index % len(good_colleges)]
             users_assigned_to_current_college += 1
+            
+            logger.info(f"Assigning college '{college_name}' to user '{user['user_name']}' (was: '{campus_name}')")
             
             # Move to next college after assigning 2 users
             if users_assigned_to_current_college >= users_per_college:

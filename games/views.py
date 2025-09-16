@@ -439,11 +439,25 @@ def create_session(request):
         context_id = str(uuid.uuid4())
         prompt = get_scenario_prompt()
         
-        # Extract scenario title
+        # Extract scenario title and description
         scenario_title = None
+        scenario_description = None
         if prompt:
-            scenario_title = extract_scenario_title(prompt)
-            logger.info(f"Extracted scenario title: {scenario_title}")
+            # Extract title
+            try:
+                scenario_title = extract_scenario_title(prompt)
+                logger.info(f"Extracted scenario title: {scenario_title}")
+            except Exception as title_error:
+                logger.warning(f"Failed to extract scenario title: {title_error}")
+                # Continue with session creation even if title extraction fails
+            
+            # Extract description
+            try:
+                scenario_description = extract_scenario_description(prompt)
+                logger.info(f"Extracted scenario description: {scenario_description}")
+            except Exception as description_error:
+                logger.warning(f"Failed to extract scenario description: {description_error}")
+                # Continue with session creation even if description extraction fails
 
         request_data = {
             "context_id": context_id,
@@ -472,9 +486,11 @@ def create_session(request):
         # Handle the response
         if response.status_code == 200:
             response_data = response.json()
-            # Add scenario title to the response
+            # Add scenario title and description to the response
             if scenario_title:
                 response_data["scenario_title"] = scenario_title
+            if scenario_description:
+                response_data["scenario_description"] = scenario_description
             return Response(response_data, status=status.HTTP_200_OK)
         else:
             logger.error(f"Failed to get response: {response.text}")
@@ -645,6 +661,28 @@ def extract_scenario_title(scenario_text):
         # Remove any brackets if present
         title = re.sub(r'^\[|\]$', '', title)
         return title
+    
+    return None
+
+
+def extract_scenario_description(scenario_text):
+    """
+    Extract the description from scenario text.
+    Looks for pattern: "Description: [description text]"
+    Returns the description or None if not found.
+    """
+    if not scenario_text:
+        return None
+    
+    # Pattern to match "Description: [description text]" - matches the actual format from Gemini
+    pattern = r"Description:\s*(.+?)(?:\n|$)"
+    match = re.search(pattern, scenario_text, re.IGNORECASE | re.MULTILINE)
+    
+    if match:
+        description = match.group(1).strip()
+        # Remove any brackets if present
+        description = re.sub(r'^\[|\]$', '', description)
+        return description
     
     return None
 

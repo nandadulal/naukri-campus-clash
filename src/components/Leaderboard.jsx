@@ -10,7 +10,7 @@ const Leaderboard = ({ users: userName, userCampus }) => {
     const fetchLeaderboardData = async (view) => {
       try {
         const response = await fetch(
-          `http://172.31.2.77:8100/api/games/${view === 'users' ? 'leaderboard' : 'leaderboard_campus'}/?user_name=${userName}`
+          `http://172.31.2.70:8100/api/games/${view === 'users' ? 'leaderboard' : 'leaderboard_campus'}/?user_name=${userName}`
         );
         if (!response.ok) throw new Error("Failed to fetch user stats");
         const data = await response.json();

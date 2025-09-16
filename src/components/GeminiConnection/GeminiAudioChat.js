@@ -35,6 +35,8 @@ const GeminiAudioChat = ({ profileImg }) => {
   // State
   const [isDhwaniSpeaking, setIsDhwaniSpeaking] = useState(false);
   const [websocketUrl, setWebSocketUrl] = useState(null);
+  const [scenarioDesc, setScenarioDesc] = useState('');
+  const [scenarioTitle, setScenarioTitle] = useState('');
   const [userText, setUserText] = useState("");
   const [loader, setLoader] = useState(false);
   const [state, setState] = useState(TEST_STATUS.PAUSED);
@@ -298,7 +300,7 @@ const GeminiAudioChat = ({ profileImg }) => {
 
   useEffect(() => {
     setLoader(true);
-    fetch("http://172.31.2.77:8100/api/games/create-session/", {
+    fetch("http://172.31.2.70:8100/api/games/create-session/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -315,6 +317,8 @@ const GeminiAudioChat = ({ profileImg }) => {
       .then((data) => {
         setLoader(false);
         setWebSocketUrl(data.connection_url);
+        setScenarioDesc(data?.scenario_description);
+        setScenarioTitle(data.scenario_title);
         console.log("Response:", data);
       })
       .catch((err) => {
@@ -325,7 +329,7 @@ const GeminiAudioChat = ({ profileImg }) => {
   useEffect(() => {
     if (state === TEST_STATUS.COMPLETED) {
     setLoader(true);
-    fetch("http://172.31.2.77:8100/api/games/evaluate/", {
+    fetch("http://172.31.2.70:8100/api/games/evaluate/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -350,7 +354,7 @@ const GeminiAudioChat = ({ profileImg }) => {
 
   useEffect(() => {
     if (botText.current !== infoStates.botText) {
-      fetch("http://172.31.2.77:8100/api/games/transcript/", {
+      fetch("http://172.31.2.70:8100/api/games/transcript/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -376,7 +380,7 @@ const GeminiAudioChat = ({ profileImg }) => {
   }, [infoStates]);
 
   useEffect(() => {
-      fetch("http://172.31.2.77:8100/api/games/transcript/", {
+      fetch("http://172.31.2.70:8100/api/games/transcript/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -477,16 +481,12 @@ const GeminiAudioChat = ({ profileImg }) => {
           <div className="assistant-container">
             <div className="ai-circle">AI</div>
             <h2 className="assistant-title">Naukri Campus Conversify</h2>
-            <p className="assistant-desc">
-              Practice your interview skills with our AI-powered assistant.{" "}
-              <br />
-              Get personalized feedback and improve your confidence.
-            </p>
             <div className="tag-buttons">
-              <button className="tag-btn">Technical Questions</button>
-              <button className="tag-btn">Behavioral Interviews</button>
-              <button className="tag-btn">Mock Scenarios</button>
+              <button className="tag-btn">{scenarioTitle}</button>
             </div>
+            <p className="assistant-desc">
+              {scenarioDesc}
+            </p>
             {
               <button
                 className="start-btn"
@@ -504,7 +504,7 @@ const GeminiAudioChat = ({ profileImg }) => {
               </button>
             }
             <p className="assistant-footer">
-              Enhance your interview skills with AI guidance
+              Enhance your skills with AI guidance
             </p>
           </div>
 

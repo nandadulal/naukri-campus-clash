@@ -28,6 +28,23 @@ services:
     container_name: redis
     restart: unless-stopped
 
+  vite-service:
+    build: 
+      context: .
+      dockerfile: Dockerfile.vite
+    container_name: naukri-campus-clash-fe
+    working_dir: /webapps
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./:/webapps
+    environment:
+      DJANGO_SETTINGS_MODULE: "123"
+    # command: >
+    #   sh -c "rm -rf node_modules package-lock.json &&
+    #        npm install --force &&
+    #        npm run dev"
+    restart: unless-stopped
   celery:
     build: .
     container_name: celery-worker

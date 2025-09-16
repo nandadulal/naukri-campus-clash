@@ -49,7 +49,7 @@ export default function Vibe() {
   useEffect(() => {
     async function fetchQuestions() {
       // Reset answers when component mounts
-      const response = await fetch("http://172.31.2.77:8100/api/games/vibe-sets/");
+      const response = await fetch("http://172.31.2.70:8100/api/games/vibe-sets/");
       if (!response.ok) {
         console.log("Failed to fetch questions");
         return;
@@ -64,7 +64,7 @@ export default function Vibe() {
     if (current < questions.length - 1) {
       setCurrent(current + 1);
     } else {
-      fetch("http://172.31.2.77:8100/api/games/update-score/", {
+      fetch("http://172.31.2.70:8100/api/games/update-score/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -86,7 +86,7 @@ export default function Vibe() {
         .catch((err) => {
           console.error("Error:", err);
         });
-      // const response = await fetch("http://172.31.2.77:8100/api/user/");
+      // const response = await fetch("http://172.31.2.70:8100/api/user/");
       // alert("Quiz Completed! " + JSON.stringify(answers, null, 2));
     }
   };

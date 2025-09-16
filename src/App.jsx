@@ -13,7 +13,6 @@ function App() {
   useEffect(() => {
     // Check if username exists in localStorage
     const storedUserName = localStorage.getItem("user_name");
-
     if (storedUserName) {
       setUserName(storedUserName);
     } else {
@@ -21,7 +20,7 @@ function App() {
       const fetchUserName = async () => {
         try {
           const response = await fetch(
-            "http://172.31.2.77:8100/api/user/"
+            "http://172.31.2.70:8100/api/user/"
           );
           if (!response.ok) throw new Error("Failed to fetch username");
           const data = await response.json();

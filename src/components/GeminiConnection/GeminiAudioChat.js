@@ -300,7 +300,7 @@ const GeminiAudioChat = ({ profileImg }) => {
 
   useEffect(() => {
     setLoader(true);
-    fetch("http://172.31.2.70:8100/api/games/create-session/", {
+    fetch("https://central8.dev.sg1.chsh.in/gamification/api/api/games/create-session/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -329,7 +329,7 @@ const GeminiAudioChat = ({ profileImg }) => {
   useEffect(() => {
     if (state === TEST_STATUS.COMPLETED) {
     setLoader(true);
-    fetch("http://172.31.2.70:8100/api/games/evaluate/", {
+    fetch("https://central8.dev.sg1.chsh.in/gamification/api/api/games/evaluate/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -354,7 +354,7 @@ const GeminiAudioChat = ({ profileImg }) => {
 
   useEffect(() => {
     if (botText.current !== infoStates.botText) {
-      fetch("http://172.31.2.70:8100/api/games/transcript/", {
+      fetch("https://central8.dev.sg1.chsh.in/gamification/api/api/games/transcript/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -380,7 +380,7 @@ const GeminiAudioChat = ({ profileImg }) => {
   }, [infoStates]);
 
   useEffect(() => {
-      fetch("http://172.31.2.70:8100/api/games/transcript/", {
+      fetch("https://central8.dev.sg1.chsh.in/gamification/api/api/games/transcript/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

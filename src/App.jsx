@@ -20,7 +20,7 @@ function App() {
       const fetchUserName = async () => {
         try {
           const response = await fetch(
-            "http://172.31.2.70:8100/api/user/"
+            "https://central8.dev.sg1.chsh.in/gamification/api/api/user/"
           );
           if (!response.ok) throw new Error("Failed to fetch username");
           const data = await response.json();

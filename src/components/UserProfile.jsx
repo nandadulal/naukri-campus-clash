@@ -11,7 +11,7 @@ const UserProfile = ({ user, onViewProfile, getStats }) => {
   //   const fetchStats = async () => {
   //     try {
   //       const response = await fetch(
-  //         "http://172.31.2.70:8100/api/games/user-profile/?user_name=" + user
+  //         "https://central8.dev.sg1.chsh.in/gamification/api/api/games/user-profile/?user_name=" + user
   //       );
   //       if (!response.ok) throw new Error("Failed to fetch user stats");
   //       const data = await response.json();

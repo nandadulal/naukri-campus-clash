@@ -414,6 +414,7 @@ def create_session(request):
     """
     API View to create session and call the external API.
     Accepts 'context' ('serious' or 'conversational') and 'username' in the request body.
+    Clears the user's transcript when starting a new session.
     """
 
     # Get parameters from request body
@@ -424,6 +425,16 @@ def create_session(request):
         return Response({"error": "username is required"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
+        # Clear user's transcript for new session
+        try:
+            transcript, created = Transcript.objects.get_or_create(user_name=username)
+            transcript.messages = []  # Reset messages to empty list
+            transcript.save()
+            logger.info(f"Cleared transcript for user: {username}")
+        except Exception as transcript_error:
+            logger.warning(f"Failed to clear transcript for user {username}: {transcript_error}")
+            # Continue with session creation even if transcript clearing fails
+
         # Prepare the session request data
         context_id = str(uuid.uuid4())
         prompt = get_scenario_prompt()

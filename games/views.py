@@ -448,7 +448,7 @@ def create_session(request):
                 scenario_title = extract_scenario_title(prompt)
                 logger.info(f"Extracted scenario title: {scenario_title}")
             except Exception as title_error:
-                logger.warning(f"Failed to extract scenario title: {title_error}")
+                logger.exception(f"Failed to extract scenario title: {title_error}")
                 # Continue with session creation even if title extraction fails
             
             # Extract description
@@ -456,7 +456,7 @@ def create_session(request):
                 scenario_description = extract_scenario_description(prompt)
                 logger.info(f"Extracted scenario description: {scenario_description}")
             except Exception as description_error:
-                logger.warning(f"Failed to extract scenario description: {description_error}")
+                logger.exception(f"Failed to extract scenario description: {description_error}")
                 # Continue with session creation even if description extraction fails
 
         request_data = {
@@ -650,7 +650,11 @@ def extract_scenario_title(scenario_text):
     Returns the title or None if not found.
     """
     if not scenario_text:
+        logger.warning("extract_scenario_title: scenario_text is None or empty")
         return None
+    
+    logger.debug(f"extract_scenario_title: Input text length: {len(scenario_text)}")
+    logger.debug(f"extract_scenario_title: First 200 chars: {scenario_text[:200]}")
     
     # Pattern to match "Title: [title text]" - matches the actual format from Gemini
     pattern = r"Title:\s*(.+?)(?:\n|$)"
@@ -660,7 +664,20 @@ def extract_scenario_title(scenario_text):
         title = match.group(1).strip()
         # Remove any brackets if present
         title = re.sub(r'^\[|\]$', '', title)
+        logger.info(f"extract_scenario_title: Successfully extracted title: '{title}'")
         return title
+    else:
+        logger.warning("extract_scenario_title: No title pattern found in text")
+        # Try alternative patterns for debugging
+        if "Title" in scenario_text:
+            logger.warning("extract_scenario_title: 'Title' found in text but pattern didn't match")
+            # Find all lines containing "Title"
+            lines = scenario_text.split('\n')
+            for i, line in enumerate(lines):
+                if 'Title' in line:
+                    logger.warning(f"extract_scenario_title: Line {i} with 'Title': '{line}'")
+        else:
+            logger.warning("extract_scenario_title: 'Title' not found anywhere in text")
     
     return None
 

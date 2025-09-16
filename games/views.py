@@ -164,15 +164,44 @@ def leaderboard(request):
         )
     )
 
+    # List of good college names for assignment
+    good_colleges = [
+        "IIT Bombay", "IIT Delhi", "IIT Madras", "IIT Kanpur", "IIT Kharagpur",
+        "IIT Roorkee", "IIT Guwahati", "IIT Hyderabad", "IIT Indore", "IIT BHU",
+        "NIT Trichy", "NIT Surathkal", "NIT Warangal", "NIT Calicut", "NIT Rourkela",
+        "BITS Pilani", "IIIT Hyderabad", "IIIT Bangalore", "IIIT Delhi", "IIIT Allahabad",
+        "Jadavpur University", "Anna University", "VIT University", "SRM University",
+        "Manipal Institute of Technology", "Thapar Institute", "BMS College", "RV College"
+    ]
+
+    # Process all users and handle null/empty campus names
     leaderboard = []
+    college_index = 0
+    users_per_college = 2
+    users_assigned_to_current_college = 0
+
     for user in real_data:
         total_xp = user["total_xp"] or 0
         game_count = user["game_count"] or 0
         efficiency = total_xp / game_count if game_count > 0 else 0
+        campus_name = user["campus_name"]
+
+        # Check if campus_name is null, empty, or "Unknown"
+        if not campus_name or campus_name.strip() == "" or campus_name.lower() == "unknown":
+            # Assign a college name to this user
+            college_name = good_colleges[college_index % len(good_colleges)]
+            users_assigned_to_current_college += 1
+            
+            # Move to next college after assigning 2 users
+            if users_assigned_to_current_college >= users_per_college:
+                college_index += 1
+                users_assigned_to_current_college = 0
+            
+            campus_name = college_name
 
         leaderboard.append({
             "user_name": user["user_name"],
-            "campus_name": user["campus_name"],  # ✅ campus name without grouping
+            "campus_name": campus_name,
             "total_xp": total_xp,
             "game_count": game_count,
             "efficiency": round(efficiency, 2),

@@ -138,10 +138,10 @@ export default function Vibe() {
         </motion.div>
       </AnimatePresence>)}
       {openModal && (<GameCompleteModal xpValue={10 * questions.length} pathFinder="GenZ Approved!" completedCareerNavigation="Your vibes are off the roof" onContinueGaming={() => {
-        window.location.href = "/"; // Redirect to home or another page
+        window.location.href = "/gamification-ui/"; // Redirect to home or another page
         setOpenModal(false)
       }} onClose={() => {
-        window.location.href = "/";
+        window.location.href = "/gamification-ui/";
         setOpenModal(false)
       }} />)}
     </div>

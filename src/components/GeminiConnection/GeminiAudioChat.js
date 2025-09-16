@@ -515,11 +515,11 @@ const GeminiAudioChat = ({ profileImg }) => {
               strengths={modalDetails.evaluation.strengths || "N/A"}
               weakness={modalDetails.evaluation.areas_of_improvement || "N/A"}
               onContinueGaming={() => {
-                window.location.href = "/"; // Redirect to home or another page
+                window.location.href = "/gamification-ui/"; // Redirect to home or another page
                 setModalDetails(null);
               }}
               onClose={() => {
-                window.location.href = "/";
+                window.location.href = "/gamification-ui/";
                 setModalDetails(null);
               }}
             />

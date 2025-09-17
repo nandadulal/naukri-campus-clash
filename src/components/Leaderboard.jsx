@@ -58,6 +58,7 @@ const Leaderboard = ({ users: userName, userCampus }) => {
           <LeaderboardItem
             key={user.id}
             user={user}
+            isCampus={viewType === 'campus'}
             isCurrent={viewType === 'campus' ? userCampus === user["campus_name"]: user["user_name"] === userName }
           />
         ))}
